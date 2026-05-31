@@ -1,10 +1,10 @@
 ---
-title: "Install the Ovo POEditor Fastlane Plugin"
+title: "Install fastlane-plugin-ovo_poeditor in Your Project"
 sidebarTitle: "Installation"
 description: "How to add fastlane-plugin-ovo_poeditor to a Fastlane project using the plugin installer, verify the Pluginfile entry, and install dependencies."
 ---
 
-Before installing the plugin, make sure your environment meets the minimum requirements. You need **Ruby 3.0 or later** and **Fastlane 2.227.2 or later**. If you are managing dependencies with Bundler (recommended), your project should already have a `Gemfile` and a `Gemfile.lock` in the root of your repository. All commands below assume you are running from that root.
+Before installing the plugin, make sure your environment meets the minimum requirements. You need **Ruby 3.0 or later** and **Fastlane 2.227.2 or later** (the version used during development and testing). If you are managing dependencies with Bundler (recommended), your project should already have a `Gemfile` and a `Gemfile.lock` in the root of your repository. All commands below assume you are running from that root.
 
 <Note>
   The gem is publicly available on RubyGems at [rubygems.org/gems/fastlane-plugin-ovo_poeditor](https://rubygems.org/gems/fastlane-plugin-ovo_poeditor). No private registry or additional credentials are required to install it.
@@ -40,13 +40,13 @@ Before installing the plugin, make sure your environment meets the minimum requi
 
 ## Gem Metadata
 
-The following constraints are declared in the gemspec and enforced at install time:
+Key facts about the gem:
 
 | Field | Value |
 |---|---|
 | Gem name | `fastlane-plugin-ovo_poeditor` |
-| Required Ruby | `>= 3.0` |
-| Required Fastlane | `>= 2.227.2` |
+| Required Ruby | `>= 3.0` (declared in gemspec) |
+| Minimum Fastlane | `>= 2.227.2` (declared in project Gemfile) |
 | License | MIT |
 | MFA required on RubyGems | Yes |
 

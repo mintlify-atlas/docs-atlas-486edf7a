@@ -4,7 +4,7 @@ sidebarTitle: "Action Parameters"
 description: "Complete reference for all parameters accepted by the ovo_poeditor_strings Fastlane action, including types, defaults, and env vars."
 ---
 
-The `ovo_poeditor_strings` action fetches the latest localization terms from POEditor and writes them to disk in the format your project requires. It accepts 12 parameters extracted directly from the action source, covering authentication, project targeting, output configuration, and platform-specific export options. Required parameters must always be supplied; optional parameters refine export behaviour and can be omitted when their defaults are sufficient.
+The `ovo_poeditor_strings` action fetches the latest localization terms from POEditor and writes them to disk in the format your project requires. It accepts 11 parameters extracted directly from the action source, covering authentication, project targeting, output configuration, and platform-specific export options. Required parameters must always be supplied; optional parameters refine export behaviour and can be omitted when their defaults are sufficient.
 
 <ParamField path="api_token" type="String" required>
   Your POEditor API token. A read-only token is recommended to limit the blast radius of accidental exposure. Set via the `POEDITOR_API_TOKEN` environment variable.
