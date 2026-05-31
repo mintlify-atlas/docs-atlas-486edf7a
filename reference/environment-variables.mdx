@@ -1,0 +1,75 @@
+---
+title: "Environment Variables for Ovo POEditor Plugin"
+sidebarTitle: "Environment Variables"
+description: "All environment variables supported by ovo_poeditor_strings for CI/CD configuration without hardcoding credentials in your Fastfile."
+---
+
+Every parameter that accepts a plain scalar value has a corresponding environment variable. When Fastlane evaluates an action parameter, it checks the matching environment variable automatically — no additional configuration is needed in the Fastfile itself. This design enables teams to inject credentials and project settings from CI/CD secret stores, keeping sensitive values out of source control and making the same Fastfile portable across developer machines, staging environments, and production pipelines.
+
+## Environment Variable Reference
+
+| Environment Variable | Parameter | Type | Required |
+|---|---|---|---|
+| `POEDITOR_API_TOKEN` | `api_token` | String | Yes |
+| `POEDITOR_PROJECT_ID` | `project_id` | String | Yes |
+| `POEDITOR_LANGUAGES` | `languages` | Array | Yes |
+| `POEDITOR_OUTPUT_DIR` | `output_dir` | String | Yes |
+| `POEDITOR_FILE_NAME` | `file_name` | String | Yes |
+| `POEDITOR_EXPORT_FILE_FORMAT` | `file_format` | String | Yes |
+| `POEDITOR_DEFAULT_LANGUAGE` | `default_language` | String | No |
+| `POEDITOR_UNQUOTED_STRINGS` | `unquoted_strings` | Integer (0 or 1) | No |
+| `POEDITOR_BYPASS_DEFAULT_LANGUAGE` | `bypass_default_language` | Boolean | No |
+| `POEDITOR_FALLBACK_LANGUAGES` | `fallback_languages` | Hash | No |
+
+<Note>
+  The `language_map` parameter has no corresponding environment variable. It must be passed directly as a Hash in your Fastfile. This is intentional — complex nested structures are difficult to express reliably as environment variable strings, and the mapping is not a secret value that needs to be kept out of source control.
+</Note>
+
+## Using with CI/CD
+
+### GitHub Actions
+
+Store your POEditor credentials as [encrypted repository secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets) in GitHub, then expose them as environment variables in your workflow step. The Fastfile reads them automatically at runtime.
+
+```yaml .github/workflows/localization.yml
+jobs:
+  localization:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download translations
+        env:
+          POEDITOR_API_TOKEN: ${{ secrets.POEDITOR_API_TOKEN }}
+          POEDITOR_PROJECT_ID: ${{ secrets.POEDITOR_PROJECT_ID }}
+        run: bundle exec fastlane download_strings
+```
+
+With the credentials injected by the workflow, the Fastfile itself contains no secrets and only needs to declare the non-sensitive configuration values:
+
+```ruby Fastfile
+lane :download_strings do
+  ovo_poeditor_strings(
+    languages: ["en", "fr", "it"],
+    output_dir: "./Strings",
+    file_format: "apple_strings",
+    file_name: "Localizable.strings"
+  )
+end
+```
+
+Fastlane picks up `POEDITOR_API_TOKEN` and `POEDITOR_PROJECT_ID` from the environment automatically, so those two parameters are not listed in the lane at all.
+
+<Warning>
+  Never hardcode your POEditor API token directly in the Fastfile or commit it to source control. An exposed token allows anyone to read — or, if the token has write access, modify — all content in your POEditor project. Always supply the token via an environment variable sourced from a secret store.
+</Warning>
+
+<Tip>
+  For local development, use a `.env` file together with the [`dotenv`](https://github.com/bkeepers/dotenv) Ruby gem. Create a `.env` file at the root of your repository (and add it to `.gitignore`), then populate it with your personal POEditor credentials:
+
+  ```bash .env
+  POEDITOR_API_TOKEN=your_personal_api_token
+  POEDITOR_PROJECT_ID=123456
+  ```
+
+  Fastlane loads `.env` automatically when present, so your local runs use the same Fastfile as CI without you ever having to export variables manually in your shell.
+</Tip>

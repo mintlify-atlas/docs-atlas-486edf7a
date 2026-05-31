@@ -1,0 +1,76 @@
+---
+title: "ovo_poeditor_strings Action Parameters"
+sidebarTitle: "Action Parameters"
+description: "Complete reference for all parameters accepted by the ovo_poeditor_strings Fastlane action, including types, defaults, and env vars."
+---
+
+The `ovo_poeditor_strings` action fetches the latest localization terms from POEditor and writes them to disk in the format your project requires. It accepts 12 parameters extracted directly from the action source, covering authentication, project targeting, output configuration, and platform-specific export options. Required parameters must always be supplied; optional parameters refine export behaviour and can be omitted when their defaults are sufficient.
+
+<ParamField path="api_token" type="String" required>
+  Your POEditor API token. A read-only token is recommended to limit the blast radius of accidental exposure. Set via the `POEDITOR_API_TOKEN` environment variable.
+</ParamField>
+
+<ParamField path="project_id" type="String" required>
+  The numeric identifier of your POEditor project. Found in the POEditor dashboard URL or project settings. Set via the `POEDITOR_PROJECT_ID` environment variable.
+</ParamField>
+
+<ParamField path="languages" type="Array" required>
+  An array of BCP 47 language codes to export, for example `["en", "fr", "it"]`. Each code must match a language enabled in your POEditor project. When using the `xcstrings` format, passing a single code is sufficient — POEditor exports all project languages into one file. Set via the `POEDITOR_LANGUAGES` environment variable.
+</ParamField>
+
+<ParamField path="output_dir" type="String" required>
+  The directory on disk where localized output files will be written. The plugin creates any intermediate directories automatically. Set via the `POEDITOR_OUTPUT_DIR` environment variable.
+</ParamField>
+
+<ParamField path="file_name" type="String" required>
+  The filename to use for the exported localization file, for example `Localizable.strings` or `strings.xml`. The same name is used for every language. Set via the `POEDITOR_FILE_NAME` environment variable.
+</ParamField>
+
+<ParamField path="file_format" type="String" required>
+  Controls which export format the plugin requests from the POEditor API. Must be one of `xcstrings`, `apple_strings`, or `android_strings`. See [File Formats](reference/file-formats) for the full breakdown of each option. Set via the `POEDITOR_EXPORT_FILE_FORMAT` environment variable.
+</ParamField>
+
+<ParamField path="default_language" type="String">
+  The language code that represents the project's default or base language. For `android_strings` exports, this language is written to the `values/` folder instead of a `values-{lang}/` subfolder. Set via the `POEDITOR_DEFAULT_LANGUAGE` environment variable.
+</ParamField>
+
+<ParamField path="language_map" type="Hash">
+  A mapping from POEditor language codes to platform-specific folder name suffixes. Useful when your project uses locale qualifiers that differ from POEditor's codes, for example `{ "pt-br" => "pt-rBR" }` for Android. This parameter has no corresponding environment variable and must be passed directly in the Fastfile. See [Language Mapping](/guides/language-mapping) for examples.
+</ParamField>
+
+<ParamField path="unquoted_strings" type="Integer" default="0">
+  When set to `1`, the plugin requests an unquoted export from POEditor for `android_strings`. Accepted values are `0` (quoted, the default) and `1` (unquoted). Any other value raises a validation error before the action runs. Set via the `POEDITOR_UNQUOTED_STRINGS` environment variable.
+</ParamField>
+
+<ParamField path="bypass_default_language" type="Boolean" default="false">
+  When `true`, the plugin ignores the `default_language` check when building output paths for `android_strings`. Every language is written to a `values-{lang}/` subfolder, even the language that matches `default_language`. Set via the `POEDITOR_BYPASS_DEFAULT_LANGUAGE` environment variable.
+</ParamField>
+
+<ParamField path="fallback_languages" type="Hash">
+  A mapping of language codes to fallback language codes. When a translation is missing for a given language, POEditor falls back to the specified language before returning an empty string. Example: `{ "fr-CA" => "fr" }`. Set via the `POEDITOR_FALLBACK_LANGUAGES` environment variable.
+</ParamField>
+
+## Return Value
+
+The `ovo_poeditor_strings` action does not return a Ruby value to the Fastlane lane. Its side effect is the localization file written to disk at the path derived from `output_dir`, `file_format`, and `file_name`. On success, Fastlane logs a confirmation message for each language that was downloaded. On failure, the action logs an error and continues without blocking the rest of the lane.
+
+## Platform Support
+
+The `ovo_poeditor_strings` action is platform-agnostic. Its `is_supported?` method returns `true` for every Fastlane platform, including iOS, Android, and macOS. You can call it from any lane regardless of which `platform` block it lives in.
+
+## Usage Example
+
+The following Fastfile snippet shows a minimal, working invocation for an iOS project using the `apple_strings` format.
+
+```ruby Fastfile
+ovo_poeditor_strings(
+  api_token: ENV["POEDITOR_API_TOKEN"],
+  project_id: ENV["POEDITOR_PROJECT_ID"],
+  languages: ["en", "fr"],
+  output_dir: "./Strings",
+  file_format: "apple_strings",
+  file_name: "Localizable.strings"
+)
+```
+
+For Android and `xcstrings` examples, see the [Quickstart](quickstart) guide or the individual format guides under [File Formats](reference/file-formats).

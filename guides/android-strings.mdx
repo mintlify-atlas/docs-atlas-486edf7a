@@ -1,0 +1,91 @@
+---
+title: "Export Android strings.xml Files from POEditor"
+sidebarTitle: "Android strings"
+description: "Use ovo_poeditor_strings with android_strings format to generate strings.xml files in values and values-{lang} resource directories."
+---
+
+Android resolves localized strings at runtime by looking up resource files inside `values-{locale}` directories under `res/`. The default locale's strings live in the root `values/` directory. The plugin mirrors this convention exactly: it creates one directory per language, writes your `strings.xml` file into each one, and places the designated default language in the root `values/` folder so Android falls back to it automatically when no better locale match is found.
+
+## Output directory layout
+
+Given the example below with `default_language: "en"`, the plugin produces:
+
+```
+./values/
+├── values/
+│   └── strings.xml          ← English (default language)
+├── values-fr/
+│   └── strings.xml
+├── values-it/
+│   └── strings.xml
+└── values-ru/
+    └── strings.xml
+```
+
+The path rules are:
+
+| Language | Output path |
+|---|---|
+| Matches `default_language` | `{output_dir}/values/{file_name}` |
+| Any other language | `{output_dir}/values-{language}/{file_name}` |
+
+If a `language_map` entry exists for a language, the mapped value is used instead of the raw language code when building the `values-{…}` folder name. See [Language Mapping](/guides/language-mapping) for details.
+
+## Fastfile example
+
+```ruby Fastfile
+lane :download_strings do
+  ovo_poeditor_strings(
+    api_token: ENV["POEDITOR_API_TOKEN"],
+    project_id: ENV["POEDITOR_PROJECT_ID"],
+    languages: ["fr", "en", "it", "ru"],
+    output_dir: "./values",
+    file_format: "android_strings",
+    file_name: "strings.xml",
+    default_language: "en"
+  )
+end
+```
+
+## The `unquoted_strings` parameter
+
+Android's resource compiler treats apostrophes and quotation marks inside string values as special characters. POEditor can export strings with or without surrounding quotes depending on your preference. The `unquoted_strings` parameter controls this:
+
+| Value | Behavior |
+|---|---|
+| `0` (default) | Strings are exported with quotes preserved |
+| `1` | Strings are exported without quotes (unquoted) |
+
+Example with unquoted strings enabled:
+
+```ruby Fastfile
+lane :download_strings do
+  ovo_poeditor_strings(
+    api_token: ENV["POEDITOR_API_TOKEN"],
+    project_id: ENV["POEDITOR_PROJECT_ID"],
+    languages: ["fr", "en", "it", "ru"],
+    output_dir: "./values",
+    file_format: "android_strings",
+    file_name: "strings.xml",
+    default_language: "en",
+    unquoted_strings: 1
+  )
+end
+```
+
+## Tips and notes
+
+<Note>
+  The `default_language` parameter is optional. If you omit it, no language receives the special `values/` placement — every language will be written to a `values-{language}/` directory, including languages that would normally serve as the app's fallback locale. Make sure your Android project has a `values/strings.xml` from another source if you rely on a default fallback.
+</Note>
+
+<Tip>
+  If your default language code also requires folder name mapping (e.g. `pt-BR` → `pt-rBR`), set `bypass_default_language: true`. This tells the plugin to skip the special `values/` placement for the default language and run it through the normal `values-{mapped}/` path instead, so your `language_map` entry is applied correctly. See [Language Mapping](/guides/language-mapping) for a full explanation.
+</Tip>
+
+## Related pages
+
+- [Language Mapping](/guides/language-mapping) — translate POEditor codes to Android folder names
+- [Fallback Languages](/guides/fallback-languages) — fill in missing strings from another language
+- [Action Parameters](/reference/action-parameters) — full reference for every available option
+- [File Formats](/reference/file-formats) — all supported export format identifiers

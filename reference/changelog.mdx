@@ -1,0 +1,57 @@
+---
+title: "Ovo POEditor Plugin Changelog"
+sidebarTitle: "Changelog"
+description: "Full version history of fastlane-plugin-ovo_poeditor, including added features, bug fixes, and breaking changes per release."
+---
+
+This page records every notable change made to `fastlane-plugin-ovo_poeditor` since its first public release. Entries follow the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). For tagged releases and downloadable archives, visit the [GitHub releases page](https://github.com/ovolab/fastlane-plugin-ovo_poeditor/releases).
+
+## [1.3.0] — 2026-04-30
+
+### Added
+
+- Added `fallback_languages` parameter to the export action.
+
+## [1.2.2] — 2026-04-24
+
+### Fixed
+
+- Normalized Apple `.strings` values to strip escaped double newlines (`\\n`).
+
+## [1.2.1] — 2026-04-17
+
+- Tagged but not published to RubyGems due to a publishing error.
+
+## [1.2.0] — 2026-03-03
+
+### Added
+
+- Added `bypass_default_language` parameter to skip the default language check.
+
+## [1.1.0] — 2026-01-18
+
+### Added
+
+- Added `default_language` and `language_map` options to better support Android.
+- Added `unquoted_strings` flag when triggering `android_strings`.
+
+### Changed
+
+- Updated available options description.
+- Updated Ruby requirement to version 3.0.
+- Removed language map from environment variables in favor of the new option.
+
+### Fixed
+
+- Removed stray `form_data` debug print.
+
+## [1.0.0] — 2025-08-06
+
+### Added
+
+- First public release of the `ovo_poeditor` fastlane plugin.
+- Added `.lproj` handling for Apple `.strings` export.
+
+### Changed
+
+- Do not block fastlane execution on error.

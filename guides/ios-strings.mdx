@@ -1,0 +1,74 @@
+---
+title: "Export Apple .strings Files from POEditor"
+sidebarTitle: "iOS .strings"
+description: "How to use ovo_poeditor_strings with apple_strings format to generate per-language .lproj directories and Localizable.strings for iOS."
+---
+
+Apple's `.strings` format is the original localization mechanism for iOS, macOS, tvOS, and watchOS projects. Each language lives in its own `{language-code}.lproj` directory, and Xcode resolves the correct file at runtime based on the device's locale. While Swift String Catalogs (`.xcstrings`) are preferred for new projects targeting Xcode 15+, the `.strings` format remains widely used in existing codebases and is fully supported by the plugin.
+
+## Output directory layout
+
+For every language code listed in the `languages` array, the plugin creates a subdirectory named `{language}.lproj` inside `output_dir` and writes the translated file there. Given the example configuration below, the resulting structure would be:
+
+```
+./Strings/
+├── fr.lproj/
+│   └── Localizable.strings
+├── en.lproj/
+│   └── Localizable.strings
+├── it.lproj/
+│   └── Localizable.strings
+└── ru.lproj/
+    └── Localizable.strings
+```
+
+Each file path follows the pattern `{output_dir}/{language}.lproj/{file_name}`.
+
+## Fastfile example
+
+```ruby Fastfile
+lane :download_strings do
+  ovo_poeditor_strings(
+    api_token: ENV["POEDITOR_API_TOKEN"],
+    project_id: ENV["POEDITOR_PROJECT_ID"],
+    languages: ["fr", "en", "it", "ru"],
+    output_dir: "./Strings",
+    file_format: "apple_strings",
+    file_name: "Localizable.strings"
+  )
+end
+```
+
+## Newline normalization
+
+POEditor sometimes exports escaped newline sequences (`\\n`) inside string values rather than real newlines. When left as-is these appear as literal backslash-n characters in the rendered UI. The plugin automatically corrects this for `apple_strings` exports by replacing every `\\n` escape with a real newline character before writing the file.
+
+**Before normalization (raw POEditor export):**
+
+```
+"KEY" = "Line 1\\nLine 2";
+```
+
+**After normalization (written to disk):**
+
+```
+"KEY" = "Line 1\nLine 2";
+```
+
+No configuration is required — the fix is applied automatically whenever `file_format` is `apple_strings`.
+
+## Tips and notes
+
+<Tip>
+  Enable **Base Internationalization** in your Xcode project settings. With Base Internationalization turned on, Xcode manages the `.lproj` structure for you and the plugin-generated directories integrate seamlessly without manual project file edits.
+</Tip>
+
+<Note>
+  Language codes in the `languages` array must match the codes configured in your POEditor project exactly. For example, if your project uses `pt-BR` in POEditor you must pass `"pt-BR"` — not `"pt"` or `"pt_BR"`. Mismatched codes will result in an error from the POEditor API and no file will be written for that language.
+</Note>
+
+## Related pages
+
+- [iOS xcstrings](/guides/ios-xcstrings) — modern Swift String Catalog export for Xcode 15+
+- [Fallback Languages](/guides/fallback-languages) — fill in missing strings from another language
+- [Action Parameters](/reference/action-parameters) — full reference for every available option

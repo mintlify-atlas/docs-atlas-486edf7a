@@ -1,0 +1,64 @@
+---
+title: "Configure Fallback Languages in POEditor Exports"
+sidebarTitle: "Fallback Languages"
+description: "Use the fallback_languages parameter to specify per-language fallback translations when a string is missing or untranslated in POEditor."
+---
+
+Translation projects rarely reach 100% completion for every language at the same time. When a string has not yet been translated into a target language, the POEditor export may include an empty value or omit the key entirely — leaving your app with a blank or untranslated string at runtime. The POEditor API provides a `fallback_language` option that tells it to substitute the fallback language's approved translation whenever the target language's translation is missing. The plugin surfaces this capability through the `fallback_languages` parameter, letting you configure a different fallback for each language in a single lane call.
+
+## The `fallback_languages` parameter
+
+`fallback_languages` is a Ruby Hash where each key is a target language code (matching an entry in your `languages` array) and each value is the language code to fall back to. The parameter was introduced in **v1.3.0**.
+
+When the plugin exports a language that has an entry in `fallback_languages`, it includes the mapped fallback code in the POEditor API request. POEditor then fills any untranslated string with the corresponding translation from the fallback language before generating the export file.
+
+## Fastfile example
+
+```ruby Fastfile
+lane :download_strings do
+  ovo_poeditor_strings(
+    api_token: ENV["POEDITOR_API_TOKEN"],
+    project_id: ENV["POEDITOR_PROJECT_ID"],
+    languages: ["it", "de", "fr"],
+    output_dir: "./Strings",
+    file_format: "apple_strings",
+    file_name: "Localizable.strings",
+    fallback_languages: {
+      "it" => "en",
+      "de" => "en"
+    }
+  )
+end
+```
+
+In this example:
+
+- The **Italian** export requests `fallback_language: en` — any Italian string not yet translated will use the English value instead.
+- The **German** export similarly falls back to English for missing strings.
+- The **French** export has no entry in `fallback_languages`, so no fallback is applied and the export reflects only what is available in French on POEditor.
+
+## How it works internally
+
+For each language being exported the plugin checks whether `fallback_languages` contains an entry for that language code. If a match is found, the fallback code is appended to the POEditor API form data as `fallback_language` before the export request is made. The substitution happens server-side — the downloaded file already contains the filled-in values, with no post-processing required by the plugin.
+
+## Tips and notes
+
+<Note>
+  If a language code does not appear as a key in `fallback_languages`, no `fallback_language` parameter is sent to the POEditor API for that export. The resulting file will contain only the translations that exist for that language in POEditor, with empty or missing strings left as-is.
+</Note>
+
+<Note>
+  The `fallback_languages` parameter was introduced in v1.3.0. If you are running an earlier version of the plugin, upgrade before using this feature. See the [Changelog](/reference/changelog) for the full version history.
+</Note>
+
+<Tip>
+  The fallback language code must be a valid language that is enabled in your POEditor project. If you specify a code that does not exist in the project, the POEditor API will ignore the fallback silently and export only the available translations for the target language. Verify your fallback codes in the POEditor project settings before running the lane.
+</Tip>
+
+## Related pages
+
+- [iOS .strings](/guides/ios-strings) — Apple `.strings` export guide
+- [iOS xcstrings](/guides/ios-xcstrings) — Swift String Catalog export guide
+- [Android strings](/guides/android-strings) — Android `strings.xml` export guide
+- [Action Parameters](/reference/action-parameters) — full reference for every available option
+- [Changelog](/reference/changelog) — version history and release notes

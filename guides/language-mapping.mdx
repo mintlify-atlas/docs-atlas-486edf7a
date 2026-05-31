@@ -1,0 +1,77 @@
+---
+title: "Map POEditor Language Codes to Android Folders"
+sidebarTitle: "Language Mapping"
+description: "Use the language_map parameter to translate POEditor language codes to the correct platform-specific locale folder names for Android."
+---
+
+POEditor uses IETF-style language tags such as `zh-CN` (Simplified Chinese) and `pt-BR` (Brazilian Portuguese), but Android resource folder names follow a different convention: region subtags are separated by a lowercase `r` rather than a hyphen, giving you `zh-rCN` and `pt-rBR`. Without translation, the plugin would create folders named `values-zh-CN` and `values-pt-BR`, which Android's resource resolver does not recognise. The `language_map` parameter bridges this gap by letting you define an explicit mapping from each POEditor code to the exact folder suffix Android expects.
+
+## How `language_map` works
+
+`language_map` is a Ruby Hash where each key is a POEditor language code string and each value is the folder suffix that should replace it when building the `values-{…}` directory name. When the plugin processes a language, it checks whether an entry exists in the map:
+
+- **Entry found** → the folder is named `values-{mapped_value}`
+- **No entry** → the raw POEditor language code is used as-is: `values-{language}`
+
+## Fastfile example
+
+```ruby Fastfile
+lane :download_strings do
+  ovo_poeditor_strings(
+    api_token: ENV["POEDITOR_API_TOKEN"],
+    project_id: ENV["POEDITOR_PROJECT_ID"],
+    languages: ["fr", "en", "zh-CN", "pt-BR"],
+    output_dir: "./app/src/main/res",
+    file_format: "android_strings",
+    file_name: "strings.xml",
+    default_language: "en",
+    language_map: {
+      "zh-CN" => "zh-rCN",
+      "pt-BR" => "pt-rBR"
+    }
+  )
+end
+```
+
+With this configuration the plugin produces:
+
+```
+./app/src/main/res/
+├── values/
+│   └── strings.xml          ← English (default_language)
+├── values-fr/
+│   └── strings.xml          ← French (no mapping needed)
+├── values-zh-rCN/
+│   └── strings.xml          ← Simplified Chinese (mapped)
+└── values-pt-rBR/
+    └── strings.xml          ← Brazilian Portuguese (mapped)
+```
+
+## Language code reference
+
+| POEditor Code | Android Folder | Notes |
+|---|---|---|
+| `zh-CN` | `values-zh-rCN` | Simplified Chinese — requires mapping |
+| `pt-BR` | `values-pt-rBR` | Brazilian Portuguese — requires mapping |
+| `fr` | `values-fr` | French — no mapping needed |
+
+Any language code that does not contain a region subtag (e.g. `fr`, `it`, `ru`, `de`) is already compatible with Android folder naming and does not require a `language_map` entry.
+
+## Behaviour without a mapping
+
+If you export a regional language code such as `zh-CN` without adding it to `language_map`, the plugin uses the code verbatim and writes to `values-zh-CN`. Android will not resolve that directory for the `zh-CN` locale, so users will fall back to your default language instead of seeing Simplified Chinese strings. Always add `language_map` entries for any language that includes a region subtag.
+
+## Tips and notes
+
+<Tip>
+  If your `default_language` is a regional code that also requires mapping (e.g. `pt-BR`), set `bypass_default_language: true` alongside `language_map`. This prevents the plugin from placing that language in the root `values/` directory and ensures the mapping is applied, writing the file to `values-pt-rBR/` as expected. See [Android strings](/guides/android-strings) for more on `default_language` and `bypass_default_language`.
+</Tip>
+
+<Note>
+  `language_map` applies only to `android_strings` exports. It has no effect when `file_format` is `apple_strings` or `xcstrings`, because iOS uses the POEditor language code directly as the `.lproj` directory name.
+</Note>
+
+## Related pages
+
+- [Android strings](/guides/android-strings) — full Android export guide including `default_language` and `unquoted_strings`
+- [Action Parameters](/reference/action-parameters) — full reference for every available option

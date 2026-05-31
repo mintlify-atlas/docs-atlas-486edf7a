@@ -1,0 +1,203 @@
+---
+title: "Supported Localization File Formats"
+sidebarTitle: "File Formats"
+description: "The three export file formats supported by ovo_poeditor_strings: xcstrings, apple_strings, and android_strings with their output structures."
+---
+
+The `file_format` parameter controls both what the plugin requests from the POEditor export API and how the resulting files are arranged on disk. Choosing the correct format for your project avoids misplaced files and ensures the platform's string-loading machinery finds everything it expects. Three formats are supported: `xcstrings` for modern Xcode 15+ Swift String Catalogs, `apple_strings` for traditional `.strings` files used by UIKit and AppKit projects, and `android_strings` for Android XML resource files.
+
+<Tabs>
+  <Tab title="xcstrings">
+    ## xcstrings
+
+    The Swift String Catalog format was introduced in Xcode 15. Rather than one file per language, all translations for every language in the project are bundled into a single JSON-based `.xcstrings` file. Xcode reads this file at build time and provides the correct translation for the active locale automatically.
+
+    **POEditor export type sent:** `xcstrings`
+
+    **Additional options sent to POEditor API:** `options: [{"export_all":1}]`
+
+    This `export_all` option tells POEditor to include every project language in the exported file, regardless of which language code you pass in `languages`. As a result, you only need to provide a single language entry in the `languages` array — the plugin still iterates over it to trigger the export call, but the resulting file contains all languages.
+
+    **Output path formula:**
+
+    ```
+    {output_dir}/{file_name}
+    ```
+
+    The output is written to a single flat path — there is no language subfolder. All languages share one file.
+
+    **Example output path:**
+
+    ```
+    ./XCStrings/Localizable.xcstrings
+    ```
+
+    **Fastfile example:**
+
+    ```ruby Fastfile
+    ovo_poeditor_strings(
+      api_token: ENV["POEDITOR_API_TOKEN"],
+      project_id: ENV["POEDITOR_PROJECT_ID"],
+      languages: ["en"],
+      output_dir: "./XCStrings",
+      file_format: "xcstrings",
+      file_name: "Localizable.xcstrings"
+    )
+    ```
+
+    **Parameters that apply to this format:**
+
+    | Parameter | Used |
+    |---|---|
+    | `api_token` | ✅ |
+    | `project_id` | ✅ |
+    | `languages` | ✅ (single code sufficient) |
+    | `output_dir` | ✅ |
+    | `file_name` | ✅ |
+    | `file_format` | ✅ |
+    | `fallback_languages` | ✅ |
+    | `default_language` | ❌ ignored |
+    | `language_map` | ❌ ignored |
+    | `unquoted_strings` | ❌ ignored |
+    | `bypass_default_language` | ❌ ignored |
+
+    For a complete walkthrough, see [iOS xcstrings Guide](guides/ios-xcstrings).
+  </Tab>
+
+  <Tab title="apple_strings">
+    ## apple_strings
+
+    The traditional Apple `.strings` format stores key-value pairs in a plain-text format understood by UIKit, AppKit, and SwiftUI's `NSLocalizedString` APIs. The plugin exports one `.strings` file per language and places each inside a `{language}.lproj/` subdirectory, which is the directory structure Xcode expects for per-language resources.
+
+    **POEditor export type sent:** `apple_strings`
+
+    **Post-processing:** After downloading, the plugin runs a normalization pass that converts escaped double-newline sequences (`\\n`) in string values to literal newline characters (`\n`). This corrects a common encoding artefact that can appear in POEditor exports.
+
+    **Output path formula:**
+
+    ```
+    {output_dir}/{language}.lproj/{file_name}
+    ```
+
+    **Example output paths:**
+
+    ```
+    ./Strings/en.lproj/Localizable.strings
+    ./Strings/fr.lproj/Localizable.strings
+    ./Strings/it.lproj/Localizable.strings
+    ```
+
+    **Fastfile example:**
+
+    ```ruby Fastfile
+    ovo_poeditor_strings(
+      api_token: ENV["POEDITOR_API_TOKEN"],
+      project_id: ENV["POEDITOR_PROJECT_ID"],
+      languages: ["en", "fr", "it"],
+      output_dir: "./Strings",
+      file_format: "apple_strings",
+      file_name: "Localizable.strings"
+    )
+    ```
+
+    **Parameters that apply to this format:**
+
+    | Parameter | Used |
+    |---|---|
+    | `api_token` | ✅ |
+    | `project_id` | ✅ |
+    | `languages` | ✅ |
+    | `output_dir` | ✅ |
+    | `file_name` | ✅ |
+    | `file_format` | ✅ |
+    | `fallback_languages` | ✅ |
+    | `default_language` | ❌ ignored |
+    | `language_map` | ❌ ignored |
+    | `unquoted_strings` | ❌ ignored |
+    | `bypass_default_language` | ❌ ignored |
+
+    For a complete walkthrough, see [iOS Strings Guide](guides/ios-strings).
+  </Tab>
+
+  <Tab title="android_strings">
+    ## android_strings
+
+    Android XML string resources are placed in `res/values/` (default language) and `res/values-{lang}/` (all other languages) directories inside an Android module. The plugin replicates this convention by writing one `strings.xml` file per language into the appropriate subfolder under `output_dir`.
+
+    **POEditor export type sent:** `android_strings`
+
+    **Additional options sent to POEditor API:** `options: [{"unquoted": {unquoted_strings}}]` — set `unquoted_strings: 1` to request unquoted values from POEditor.
+
+    **Output path formulas:**
+
+    - **Default language** (when `language == default_language` and `bypass_default_language` is not set):
+      ```
+      {output_dir}/values/{file_name}
+      ```
+    - **All other languages** (or when `bypass_default_language: true`):
+      ```
+      {output_dir}/values-{language}/{file_name}
+      ```
+    - **Mapped language** (when a `language_map` entry exists for the language code):
+      ```
+      {output_dir}/values-{mapped_language}/{file_name}
+      ```
+
+    **Example output paths:**
+
+    ```
+    ./app/src/main/res/values/strings.xml          ← default language (en)
+    ./app/src/main/res/values-fr/strings.xml       ← French
+    ./app/src/main/res/values-pt-rBR/strings.xml   ← Brazilian Portuguese (via language_map)
+    ```
+
+    **Fastfile example:**
+
+    ```ruby Fastfile
+    ovo_poeditor_strings(
+      api_token: ENV["POEDITOR_API_TOKEN"],
+      project_id: ENV["POEDITOR_PROJECT_ID"],
+      languages: ["en", "fr", "pt-br"],
+      output_dir: "./app/src/main/res",
+      file_format: "android_strings",
+      file_name: "strings.xml",
+      default_language: "en",
+      language_map: {
+        "pt-br" => "pt-rBR"
+      }
+    )
+    ```
+
+    **Parameters that apply to this format:**
+
+    | Parameter | Used |
+    |---|---|
+    | `api_token` | ✅ |
+    | `project_id` | ✅ |
+    | `languages` | ✅ |
+    | `output_dir` | ✅ |
+    | `file_name` | ✅ |
+    | `file_format` | ✅ |
+    | `default_language` | ✅ |
+    | `language_map` | ✅ |
+    | `unquoted_strings` | ✅ |
+    | `bypass_default_language` | ✅ |
+    | `fallback_languages` | ✅ |
+
+    For a complete walkthrough, see [Android Strings Guide](guides/android-strings).
+  </Tab>
+</Tabs>
+
+## Choosing a Format
+
+Use the table below to select the right format for your project type.
+
+| Format | Best for | Xcode / Gradle version |
+|---|---|---|
+| `xcstrings` | Modern Swift projects using Xcode's String Catalog feature | Xcode 15 and later |
+| `apple_strings` | UIKit, AppKit, or SwiftUI projects targeting older Xcode versions | Xcode 14 and earlier, or any version with existing `.strings` workflows |
+| `android_strings` | Android Gradle projects using standard XML string resources | Any Android Gradle version |
+
+- Choose `xcstrings` for any Xcode 15+ project. The single-file output simplifies your repository and gives Xcode full control over pluralisation and locale fallbacks.
+- Choose `apple_strings` if your project predates Xcode 15, uses a custom localization build step, or already has an established `.lproj` directory structure you want to preserve.
+- Choose `android_strings` for any Android project. Combine it with `default_language` and `language_map` to match your module's exact resource directory naming conventions. See [Language Mapping](guides/language-mapping) for details.

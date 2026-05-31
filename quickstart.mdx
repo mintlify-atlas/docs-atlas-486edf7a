@@ -1,47 +1,137 @@
 ---
-title: "Quickstart"
-description: "Begin with a guide on the fastest path to a successful outcome"
+title: "Get Started with Ovo POEditor in 5 Minutes"
+sidebarTitle: "Quickstart"
+description: "Step-by-step guide to setting up your first Fastlane lane using ovo_poeditor_strings to download POEditor translations into your iOS or Android project."
 ---
 
-Describe how someone begins using your product. What is the first thing they need to do? Are there any prerequisites?
+By the end of this guide you will have a working Fastlane lane that authenticates with the POEditor API, exports your translations in the format that suits your project, and writes the resulting file to the correct location in your repository — all in a single command. No manual file downloads, no renaming, no copy-pasting between directories.
 
-A quickstart should take someone from zero to using your product. They'll get a quick win and a sense of what they can accomplish.
-
-## Prerequisites
-
-Before you begin, you must have:
-
-- Requirement one (for example, Node.js 18+, a free account, an API key)
-- Requirement two (for example, a compatible device, a compatible browser, a compatible operating system)
-
-## Get started
+<Tip>
+  Never hardcode your POEditor credentials in a Fastfile. Store `POEDITOR_API_TOKEN` and `POEDITOR_PROJECT_ID` in environment variables or in a `.env` file at your project root (add `.env` to `.gitignore`). Fastlane automatically loads `.env` files, so the values will be available in your lane without any extra configuration.
+</Tip>
 
 <Steps>
-  <Step title="Install">
-    Describe how to install your product or sign up.
+  <Step title="Obtain your POEditor credentials">
+    You need two values before writing your lane:
+
+    - **API token** — go to your POEditor account, navigate to **Settings → API Access**, and copy your token. A read-only token is sufficient and is strongly recommended.
+    - **Project ID** — open your POEditor project. The numeric ID appears in the browser URL: `https://poeditor.com/projects/view?id=YOUR_PROJECT_ID`.
+
+    Store both values as environment variables:
 
     ```bash
-    npm install your-package
+    export POEDITOR_API_TOKEN="your_read_only_token"
+    export POEDITOR_PROJECT_ID="123456"
     ```
   </Step>
-  <Step title="Configure">
-    Describe any setup or configuration needed before first use.
+
+  <Step title="Install the plugin">
+    If you haven't already added the plugin to your project, follow the [Installation](/installation) guide, then return here. The short version:
 
     ```bash
-    your-cli init
+    fastlane add_plugin ovo_poeditor
+    bundle install
     ```
   </Step>
-  <Step title="Run it">
-    Show the first thing a user does to see it working.
+
+  <Step title="Add a lane to your Fastfile">
+    Open `fastlane/Fastfile` and add the lane below. This example uses the `xcstrings` format, which produces a single Xcode 15+ String Catalog containing all languages at once.
+
+    ```ruby Fastfile
+    lane :download_strings do
+      ovo_poeditor_strings(
+        api_token: ENV["POEDITOR_API_TOKEN"],
+        project_id: ENV["POEDITOR_PROJECT_ID"],
+        languages: ["en", "fr", "it"],
+        output_dir: "./XCStrings",
+        file_format: "xcstrings",
+        file_name: "Localizable.xcstrings"
+      )
+    end
+    ```
+
+    <Note>
+      When `file_format` is `"xcstrings"`, POEditor exports **all** languages enabled in the project into a single file, regardless of how many language codes you include in the `languages` array. You only need to pass one language code to trigger the export — the rest are included automatically.
+    </Note>
+  </Step>
+
+  <Step title="Run the lane">
+    Execute the lane from your project root:
 
     ```bash
-    your-cli start
+    bundle exec fastlane download_strings
     ```
+
+    Fastlane will call the POEditor v2 export API, retrieve the download URL, fetch the file, and write it to disk. You will see a success message in the terminal for each language processed.
+  </Step>
+
+  <Step title="Verify the output">
+    After the lane completes, confirm the file was written to the expected path:
+
+    ```bash
+    ls -lh ./XCStrings/Localizable.xcstrings
+    ```
+
+    The file at `./XCStrings/Localizable.xcstrings` is ready to be committed to your repository or consumed by downstream Fastlane actions (such as a build or upload lane). For `apple_strings`, each language produces its own file at `./Strings/<lang>.lproj/Localizable.strings`. For `android_strings`, each language lands in `./Android/values-<lang>/strings.xml` (with the default language going into `./Android/values/strings.xml`).
   </Step>
 </Steps>
 
-<Tip>
-  Give people a way to get help. This could be a link to a support page, a chat with a customer support agent, or a forum for your product.
+## Format Examples
 
-  Example: Need help? Reach out to us at [support@yourcompany.com](mailto:support@yourcompany.com).
-</Tip>
+All three supported export formats use the same `ovo_poeditor_strings` action. Choose the snippet that matches your platform.
+
+<CodeGroup>
+
+```ruby xcstrings (iOS — Xcode 15+)
+lane :ios_xcstrings do
+  ovo_poeditor_strings(
+    api_token: ENV["POEDITOR_API_TOKEN"],
+    project_id: ENV["POEDITOR_PROJECT_ID"],
+    languages: ["en", "fr", "it"],
+    output_dir: "./XCStrings",
+    file_format: "xcstrings",
+    file_name: "Localizable.xcstrings"
+  )
+end
+```
+
+```ruby apple_strings (iOS — classic .lproj)
+lane :ios_strings do
+  ovo_poeditor_strings(
+    api_token: ENV["POEDITOR_API_TOKEN"],
+    project_id: ENV["POEDITOR_PROJECT_ID"],
+    languages: ["en", "fr", "it"],
+    output_dir: "./Strings",
+    file_format: "apple_strings",
+    file_name: "Localizable.strings"
+  )
+end
+```
+
+```ruby android_strings (Android — strings.xml)
+lane :android_strings do
+  ovo_poeditor_strings(
+    api_token: ENV["POEDITOR_API_TOKEN"],
+    project_id: ENV["POEDITOR_PROJECT_ID"],
+    languages: ["en", "fr", "it"],
+    output_dir: "./Android",
+    file_format: "android_strings",
+    file_name: "strings.xml",
+    default_language: "en",
+    language_map: {
+      "fr" => "fr-rFR",
+      "it" => "it-rIT"
+    }
+  )
+end
+```
+
+</CodeGroup>
+
+## Next Steps
+
+- **iOS String Catalogs** — see [iOS xcstrings Guide](/guides/ios-xcstrings) for Xcode project integration details.
+- **Android resources** — see [Android strings Guide](/guides/android-strings) for `values` folder conventions and the `language_map` option.
+- **Language mapping** — see [Language Mapping](/guides/language-mapping) to map POEditor language codes to platform-specific folder names.
+- **Fallback languages** — see [Fallback Languages](/guides/fallback-languages) to configure per-language fallbacks for untranslated strings.
+- **All parameters** — see [Action Parameters Reference](/reference/action-parameters) for the complete list of available options.

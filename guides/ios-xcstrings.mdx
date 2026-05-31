@@ -1,0 +1,58 @@
+---
+title: "Export iOS String Catalogs from POEditor"
+sidebarTitle: "iOS xcstrings"
+description: "How to use ovo_poeditor_strings to download all POEditor translations as a Swift String Catalog (.xcstrings) for your iOS Xcode app."
+---
+
+Swift String Catalogs (`.xcstrings`) are the modern, recommended format for managing localizations in Xcode 15 and later. Unlike the older per-language `.strings` files, a single `.xcstrings` file stores every supported locale in one structured JSON document, giving you a unified view of your translation coverage and missing strings directly inside Xcode.
+
+## How xcstrings export works
+
+When `file_format` is set to `xcstrings`, the plugin calls the POEditor export API with the `export_all: 1` option. This instructs POEditor to bundle **all languages configured in your project** into a single file in one request. Because every locale is included automatically, you only need to pass **one language code** in the `languages` array — the plugin uses that entry solely to satisfy the parameter requirement; the exported file will always contain every available language.
+
+The resulting file is written to `{output_dir}/{file_name}`.
+
+## Fastfile example
+
+```ruby Fastfile
+lane :download_strings do
+  ovo_poeditor_strings(
+    api_token: ENV["POEDITOR_API_TOKEN"],
+    project_id: ENV["POEDITOR_PROJECT_ID"],
+    languages: ["en"],
+    output_dir: "./XCStrings",
+    file_format: "xcstrings",
+    file_name: "Localizable.xcstrings"
+  )
+end
+```
+
+With the configuration above the plugin writes a single file:
+
+```
+./XCStrings/Localizable.xcstrings
+```
+
+That file contains every language currently enabled in your POEditor project.
+
+## Adding the file to Xcode
+
+After running the lane, drag `Localizable.xcstrings` into your Xcode project navigator (or configure the path in your build scripts). Xcode recognises the `.xcstrings` extension natively and handles all locale look-up automatically at build time.
+
+<Tip>
+  Add the `output_dir` folder to your Xcode project so that `Localizable.xcstrings` is always picked up during builds. You can also reference the path directly in a Run Script build phase if you prefer to keep generated files outside the project bundle.
+</Tip>
+
+<Note>
+  The `xcstrings` format ignores the `language_map`, `default_language`, `unquoted_strings`, and `bypass_default_language` parameters entirely — those options apply only to Android string exports. See [Android strings](/guides/android-strings) and [Language Mapping](/guides/language-mapping) for details.
+</Note>
+
+<Warning>
+  Passing multiple language codes in the `languages` array is technically valid, but the plugin loops over each entry and triggers a separate POEditor export per iteration. Because `export_all: 1` is used every time, the identical all-languages file is written to disk once per loop — so you pay for redundant network calls with no benefit. Always pass a single language code (e.g. `["en"]`) for efficiency.
+</Warning>
+
+## Related pages
+
+- [Action Parameters](/reference/action-parameters) — full reference for every available option
+- [File Formats](/reference/file-formats) — supported export format identifiers
+- [iOS .strings](/guides/ios-strings) — legacy per-language `.strings` export for older Xcode projects

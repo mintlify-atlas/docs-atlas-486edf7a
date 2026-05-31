@@ -1,0 +1,69 @@
+{
+  "projectType": "sdk-library",
+  "projectName": "Ovo POEditor Plugin",
+  "projectDescription": "A Fastlane plugin that downloads localization strings from POEditor and saves them as iOS (.xcstrings / .strings) or Android (.xml) resource files.",
+  "theme": "luma",
+  "primaryColor": "#4F46E5",
+  "lightColor": "#EEF2FF",
+  "darkColor": "#1E1B4B",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/ios-xcstrings",
+              "guides/ios-strings",
+              "guides/android-strings",
+              "guides/language-mapping",
+              "guides/fallback-languages"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "reference/action-parameters",
+              "reference/file-formats",
+              "reference/environment-variables",
+              "reference/changelog"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Download POEditor translations as iOS .xcstrings (Swift String Catalog) files",
+    "Download POEditor translations as Apple .strings files with correct .lproj directory structure",
+    "Download POEditor translations as Android strings.xml with values-{lang} folder layout",
+    "Language code mapping for Android locale folder names",
+    "Fallback language support per-language via the POEditor API",
+    "bypass_default_language flag for flexible Android path control",
+    "Unquoted Android strings export option",
+    "Newline normalization for Apple .strings values"
+  ],
+  "publicApiSurface": [
+    "ovo_poeditor_strings action",
+    "api_token parameter (POEDITOR_API_TOKEN)",
+    "project_id parameter (POEDITOR_PROJECT_ID)",
+    "languages parameter (POEDITOR_LANGUAGES)",
+    "output_dir parameter (POEDITOR_OUTPUT_DIR)",
+    "file_name parameter (POEDITOR_FILE_NAME)",
+    "file_format parameter: xcstrings | apple_strings | android_strings (POEDITOR_EXPORT_FILE_FORMAT)",
+    "default_language parameter (POEDITOR_DEFAULT_LANGUAGE)",
+    "language_map parameter (Hash)",
+    "unquoted_strings parameter: 0 or 1 (POEDITOR_UNQUOTED_STRINGS)",
+    "bypass_default_language parameter (POEDITOR_BYPASS_DEFAULT_LANGUAGE)",
+    "fallback_languages parameter: Hash (POEDITOR_FALLBACK_LANGUAGES)"
+  ]
+}

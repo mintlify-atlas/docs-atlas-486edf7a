@@ -1,0 +1,59 @@
+---
+title: "Install the Ovo POEditor Fastlane Plugin"
+sidebarTitle: "Installation"
+description: "How to add fastlane-plugin-ovo_poeditor to a Fastlane project using the plugin installer, verify the Pluginfile entry, and install dependencies."
+---
+
+Before installing the plugin, make sure your environment meets the minimum requirements. You need **Ruby 3.0 or later** and **Fastlane 2.227.2 or later**. If you are managing dependencies with Bundler (recommended), your project should already have a `Gemfile` and a `Gemfile.lock` in the root of your repository. All commands below assume you are running from that root.
+
+<Note>
+  The gem is publicly available on RubyGems at [rubygems.org/gems/fastlane-plugin-ovo_poeditor](https://rubygems.org/gems/fastlane-plugin-ovo_poeditor). No private registry or additional credentials are required to install it.
+</Note>
+
+## Installation Steps
+
+<Steps>
+  <Step title="Add the plugin to your project">
+    Run the Fastlane plugin installer from your project root. This command fetches the gem from RubyGems, adds it to your `fastlane/Pluginfile`, and updates your `Gemfile.lock`.
+
+    ```bash
+    fastlane add_plugin ovo_poeditor
+    ```
+  </Step>
+
+  <Step title="Verify your Pluginfile">
+    Open `fastlane/Pluginfile` and confirm that the following line was added automatically. If you are adding the plugin manually to an existing Pluginfile, add this line yourself.
+
+    ```ruby
+    gem 'fastlane-plugin-ovo_poeditor'
+    ```
+  </Step>
+
+  <Step title="Install dependencies">
+    Resolve and install all gems, including the newly added plugin, using Bundler.
+
+    ```bash
+    bundle install
+    ```
+  </Step>
+</Steps>
+
+## Gem Metadata
+
+The following constraints are declared in the gemspec and enforced at install time:
+
+| Field | Value |
+|---|---|
+| Gem name | `fastlane-plugin-ovo_poeditor` |
+| Required Ruby | `>= 3.0` |
+| Required Fastlane | `>= 2.227.2` |
+| License | MIT |
+| MFA required on RubyGems | Yes |
+
+<Tip>
+  Always prefix your Fastlane commands with `bundle exec` — for example, `bundle exec fastlane download_strings`. This ensures Fastlane and the plugin run against exactly the gem versions locked in your `Gemfile.lock`, preventing subtle version mismatches across machines and CI environments.
+</Tip>
+
+## Next Steps
+
+With the plugin installed, head to the [Quickstart](/quickstart) to write your first lane and run a translation download in under five minutes.
